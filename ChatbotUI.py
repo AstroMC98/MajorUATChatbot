@@ -236,6 +236,9 @@ if st.session_state["response"]:
     if feedback:
         # Placeholder for logging
         g = Github(GH_TOKEN)
+        repo = g.get_repo('AstroMC98/MajorUATChatbot')
+        
+        print(feedback)
         import time
         timestr = time.strftime("%Y%m%d-%H%M%S")
         repo.create_file(f"logs/feedback_{timestr}.logs", f"Uploaded feedback on {timestr}", feedback)
