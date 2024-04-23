@@ -19,8 +19,8 @@ with st.sidebar:
 import chromadb
 from chromadb.utils import embedding_functions
 
-CHROMA_DATA_PATH = 'chroma_sources/major_travel_test/'
-COLLECTION_NAME = "document_embeddings2"
+CHROMA_DATA_PATH = 'chromadb_major_travel/'
+COLLECTION_NAME = "document_embeddings"
 
 def text_embedding(text):
     response = openai.Embedding.create(model="text-embedding-3-small", input=text)
