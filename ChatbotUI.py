@@ -8,11 +8,12 @@ import json
 from openai import OpenAI
 from streamlit_feedback import streamlit_feedback
 
-COHERE_KEY = "yrE4FdeM7mQ6i76Tw9XwGru4nRsrDYemu13Aomeb"
+COHERE_KEY = st.secrets['COHERE_KEY']
+openai_api_key = st.secrets['OPENAI_API_KEY']
 
-with st.sidebar:
-    openai_api_key = st.text_input("OpenAI API Key", key="feedback_api_key", type="password")
-    "[Get an OpenAI API key](https://platform.openai.com/account/api-keys)"
+# with st.sidebar:
+#     openai_api_key = st.text_input("OpenAI API Key", key="feedback_api_key", type="password")
+#     "[Get an OpenAI API key](https://platform.openai.com/account/api-keys)"
     
     
 ##### CONNECT TO DATABASE and OpenAI #####
