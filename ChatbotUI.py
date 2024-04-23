@@ -7,9 +7,11 @@ import openai
 import json
 from openai import OpenAI
 from streamlit_feedback import streamlit_feedback
+from github import Github
 
 COHERE_KEY = st.secrets['COHERE_KEY']
 openai_api_key = st.secrets['OPENAI_API_KEY']
+GH_TOKEN = "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"
 
 # with st.sidebar:
 #     openai_api_key = st.text_input("OpenAI API Key", key="feedback_api_key", type="password")
@@ -233,5 +235,8 @@ if st.session_state["response"]:
     )
     if feedback:
         # Placeholder for logging
-        config = ''
+        g = Github(GH_TOKEN)
+        import time
+        timestr = time.strftime("%Y%m%d-%H%M%S")
+        repo.create_file(f"logs/feedback_{timestr}.logs", f"Uploaded feedback on {timestr}", feedback)
         st.toast("Feedback recorded!", icon="📝")
