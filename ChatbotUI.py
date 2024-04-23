@@ -7,7 +7,6 @@ import openai
 import json
 from openai import OpenAI
 from streamlit_feedback import streamlit_feedback
-from github import Github
 
 COHERE_KEY = st.secrets['COHERE_KEY']
 openai_api_key = st.secrets['OPENAI_API_KEY']
@@ -234,8 +233,6 @@ if st.session_state["response"]:
     )
     if feedback:
         # Placeholder for logging
-        g = Github(GH_TOKEN)
-        repo = g.get_repo('AstroMC98/MajorUATChatbot')
         
         print(feedback)
         st.toast("Feedback recorded!", icon="📝")
