@@ -221,6 +221,9 @@ if StreamlitUser:
     for msg in messages:
         try:
             if msg['role'] in ['user', 'assistant']:
+                if msg['role'] == 'assistant':
+                    if msg.tool_calls:
+                        continue
                 with st.chat_message(msg['role']):
                     st.markdown(msg['content'])
         except:
@@ -254,7 +257,7 @@ if StreamlitUser:
                 )
                 
                 response_message = response.choices[0].message
-                logger.info(response_message)
+                logger.info(f"For {StreamlitUser} - {response_message}")
                 tool_calls = response_message.tool_calls
                 
                 if tool_calls:
