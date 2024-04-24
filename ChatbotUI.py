@@ -206,107 +206,110 @@ In the instance that the question is incomprehensible, use the template: "Sorry 
 """
 ########################################
 st.title("📝 Major Travel Chatbot UAT Platform")
+if StreamlitUser:
 
-if "messages" not in st.session_state:
-    st.session_state.messages = [
-        {'role' : 'system' , 'content' : system_prompt},
-        {"role": "assistant", "content": "How can I help you? Leave feedback to help me improve!"}
-    ]
-    
-if "response" not in st.session_state:
-    st.session_state["response"] = ''
-    
-messages = st.session_state.messages
-for msg in messages:
-    try:
-        if msg['role'] in ['user', 'assistant']:
-            with st.chat_message(msg['role']):
-                st.markdown(msg['content'])
-    except:
-        pass
-        #print(msg)
+    if "messages" not in st.session_state:
+        st.session_state.messages = [
+            {'role' : 'system' , 'content' : system_prompt},
+            {"role": "assistant", "content": "How can I help you? Leave feedback to help me improve!"}
+        ]
         
-# delete older completions to keep conversation under token limit
-while num_tokens_from_messages(messages) >= 8192*0.8:
-    #print("Removing Older Texts due to token number!")
-    messages.pop(0)
-#print("Current number of Tokens : ",  num_tokens_from_messages(messages))
-    
-if prompt := st.chat_input(placeholder="What do you want to know about Major Travel's SOPs"):
-    
-    with st.chat_message("user"):
-        st.markdown(prompt)
-
-    
-    messages.append({"role" : "user" , "content" : prompt})
-    logger.info(f"From User {StreamlitUser} - {prompt}")
+    if "response" not in st.session_state:
+        st.session_state["response"] = ''
         
-    # Get Response
-    response = OpenAIClient.chat.completions.create(
-        messages=messages,
-        model="gpt-3.5-turbo",
-        temperature=0,
-        n=1,
-        seed = 82598,
-        tools = tools,
-        tool_choice = "auto"
-    )
-    
-    response_message = response.choices[0].message
-    tool_calls = response_message.tool_calls
-    
-    if tool_calls:
-        available_fxns = {
-            "get_relevant_context" : get_relevant_context
-        }
-        
-        messages.append(response_message),
-        
-        for tool_call in tool_calls:
-            fxn_name = tool_call.function.name
-            fxn_to_call = available_fxns[fxn_name]
-            fxn_args = json.loads(tool_call.function.arguments)
-            fxn_response = fxn_to_call(
-                **fxn_args
-            )
+    messages = st.session_state.messages
+    for msg in messages:
+        try:
+            if msg['role'] in ['user', 'assistant']:
+                with st.chat_message(msg['role']):
+                    st.markdown(msg['content'])
+        except:
+            pass
+            #print(msg)
             
-            messages.append(
-                {
-                    "tool_call_id" : tool_call.id,
-                    "role" : "tool",
-                    "name" : fxn_name,
-                    "content" : fxn_response
-                }
-            )
-    context_enhanced_response = OpenAIClient.chat.completions.create(
-        messages=messages,
-        model="gpt-3.5-turbo",
-        seed = 82598,
-        temperature=0,
-        n=1,
-    )
+    # delete older completions to keep conversation under token limit
+    while num_tokens_from_messages(messages) >= 8192*0.8:
+        #print("Removing Older Texts due to token number!")
+        messages.pop(0)
+    #print("Current number of Tokens : ",  num_tokens_from_messages(messages))
+        
+    if prompt := st.chat_input(placeholder="What do you want to know about Major Travel's SOPs"):
+        
+        with st.chat_message("user"):
+            st.markdown(prompt)
     
-    # Extract Answer
-    answer = context_enhanced_response.choices[0].message.content
-    st.session_state["response"] = answer
-    messages.append({"role" : "assistant", "content" : st.session_state["response"]})
-    logger.info(f"From Chatbot in response to User ({StreamlitUser}) - {st.session_state['response']}")
+        
+        messages.append({"role" : "user" , "content" : prompt})
+        logger.info(f"From User {StreamlitUser} - {prompt}")
+            
+        # Get Response
+        response = OpenAIClient.chat.completions.create(
+            messages=messages,
+            model="gpt-3.5-turbo",
+            temperature=0,
+            n=1,
+            seed = 82598,
+            tools = tools,
+            tool_choice = "auto"
+        )
+        
+        response_message = response.choices[0].message
+        tool_calls = response_message.tool_calls
+        
+        if tool_calls:
+            available_fxns = {
+                "get_relevant_context" : get_relevant_context
+            }
+            
+            messages.append(response_message),
+            
+            for tool_call in tool_calls:
+                fxn_name = tool_call.function.name
+                fxn_to_call = available_fxns[fxn_name]
+                fxn_args = json.loads(tool_call.function.arguments)
+                fxn_response = fxn_to_call(
+                    **fxn_args
+                )
+                
+                messages.append(
+                    {
+                        "tool_call_id" : tool_call.id,
+                        "role" : "tool",
+                        "name" : fxn_name,
+                        "content" : fxn_response
+                    }
+                )
+        context_enhanced_response = OpenAIClient.chat.completions.create(
+            messages=messages,
+            model="gpt-3.5-turbo",
+            seed = 82598,
+            temperature=0,
+            n=1,
+        )
+        
+        # Extract Answer
+        answer = context_enhanced_response.choices[0].message.content
+        st.session_state["response"] = answer
+        messages.append({"role" : "assistant", "content" : st.session_state["response"]})
+        logger.info(f"From Chatbot in response to User ({StreamlitUser}) - {st.session_state['response']}")
+        if st.session_state["response"]:
+            with st.chat_message("assistant"):
+                st.markdown(st.session_state["response"])
+            
     if st.session_state["response"]:
-        with st.chat_message("assistant"):
-            st.markdown(st.session_state["response"])
-        
-if st.session_state["response"]:
-    feedback = streamlit_feedback(
-        feedback_type="thumbs",
-        optional_text_label="[Optional] Please provide an explanation",
-        key = f"feedback_{len(messages)}"
-    )
-
-    feedback_score_map = {"👍": "Good", "👎": "bad"}
-    if feedback:
-        score = feedback_score_map.get(feedback["score"])
-        if score is not None:
-            feedback_str = f"{score} Answer : {feedback.get('text')}"
-            logger.info(f"Feedback from {StreamlitUser}- {feedback_str}")
-            
-        st.toast("Feedback recorded!", icon="📝")
+        feedback = streamlit_feedback(
+            feedback_type="thumbs",
+            optional_text_label="[Optional] Please provide an explanation",
+            key = f"feedback_{len(messages)}"
+        )
+    
+        feedback_score_map = {"👍": "Good", "👎": "bad"}
+        if feedback:
+            score = feedback_score_map.get(feedback["score"])
+            if score is not None:
+                feedback_str = f"{score} Answer : {feedback.get('text')}"
+                logger.info(f"Feedback from {StreamlitUser}- {feedback_str}")
+                
+            st.toast("Feedback recorded!", icon="📝")
+else:
+    st.warning("Please input name on the sidebar first prior to proceeding with the UAT")
