@@ -12,6 +12,13 @@ import logging
 from streamlit import runtime
 from streamlit.runtime.scriptrunner import get_script_run_ctx
 
+
+from streamlit.runtime import get_instance
+from streamlit.runtime.scriptrunner import get_script_run_ctx
+runtime = get_instance()
+session_id_ = get_script_run_ctx().session_id
+session_info = runtime._session_mgr.get_session_info(session_id_)
+
 def get_remote_ip() -> str:
     """Get remote ip."""
 
@@ -31,6 +38,7 @@ def get_remote_ip() -> str:
 class ContextFilter(logging.Filter):
     def filter(self, record):
         record.user_ip = get_remote_ip()
+        record.session_id = session_info
         return super().filter(record)
 
 def init_logging():
@@ -45,7 +53,7 @@ def init_logging():
     logger.propagate = False
     logger.setLevel(logging.INFO)
     # in the formatter, use the variable "user_ip"
-    formatter = logging.Formatter("%(name)s %(asctime)s %(levelname)s [user_ip=%(user_ip)s] - %(message)s")
+    formatter = logging.Formatter("%(name)s %(asctime)s %(levelname)s [user_ip=%(user_ip)s] [session_id=%(session_id)s] - %(message)s")
     handler = logging.StreamHandler()
     handler.setLevel(logging.INFO)
     handler.addFilter(ContextFilter())
@@ -206,7 +214,6 @@ Else use the standard response template: "Sorry I was not able to find the answe
 In the instance that the question is incomprehensible, use the template: "Sorry I was not able to understand the question, can you rephrase the question?"
 """
 ########################################
-    
 st.title("📝 Major Travel Chatbot UAT Platform")
 
 if "messages" not in st.session_state:
