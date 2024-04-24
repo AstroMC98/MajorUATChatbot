@@ -304,7 +304,7 @@ if st.session_state["response"]:
 
     feedback_score_map = {"👍": "Good", "👎": "bad"}
     if feedback:
-        score = scores.get(feedback["score"])
+        score = feedback_score_map.get(feedback["score"])
         if score is not None:
             feedback_str = f"{score} Answer : {feedback.get('text')}"
             logger.info(f"Feedback - {feedback_str}")
