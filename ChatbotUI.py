@@ -301,8 +301,12 @@ if st.session_state["response"]:
         optional_text_label="[Optional] Please provide an explanation",
         key = f"feedback_{len(messages)}"
     )
+
+    feedback_score_map = {"👍": "Good", "👎": "bad"}
     if feedback:
-        # Placeholder for logging
-        
-        # os.write(1, feedback)
+        score = scores.get(feedback["score"])
+        if score is not None:
+            feedback_str = f"{score} Answer : {feedback.get('text')}"
+            logger.info(f"Feedback - {feedback_str}")
+            
         st.toast("Feedback recorded!", icon="📝")
