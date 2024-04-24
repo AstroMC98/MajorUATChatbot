@@ -229,9 +229,7 @@ if StreamlitUser:
             
     # delete older completions to keep conversation under token limit
     while num_tokens_from_messages(messages) >= 8192*0.8:
-        #print("Removing Older Texts due to token number!")
         messages.pop(0)
-    #print("Current number of Tokens : ",  num_tokens_from_messages(messages))
         
     if prompt := st.chat_input(placeholder="What do you want to know about Major Travel's SOPs"):
         
@@ -256,6 +254,7 @@ if StreamlitUser:
                 )
                 
                 response_message = response.choices[0].message
+                logger.info(response_message)
                 tool_calls = response_message.tool_calls
                 
                 if tool_calls:
