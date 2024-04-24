@@ -151,7 +151,7 @@ Answer ONLY with the facts extracted from the ChromaDB. Do not generate answers 
 To help in monitoring performance, include the CONTEXT_SOURCE_FILE of the relevant context extracted in the form of a header (if from FINE-TUNE, use the next relevant. 
 Use the following response template if you were able to answer the user's question:
 
-FROM CONTEXT FOUND IN {CONTEXT_SOURCE_FILE}
+Relevant Context found in {CONTEXT_SOURCE_FILE}\n
 {PROMPT_RESPONSE}
 
 Else use the standard response template: "Sorry I was not able to find the answer but similar contents may be found in the SOP, {CONTEXT_SOURCE_FILE}".
