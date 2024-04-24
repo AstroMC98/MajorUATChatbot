@@ -247,6 +247,8 @@ if prompt := st.chat_input(placeholder="What do you want to know about Major Tra
     st.session_state["response"] = answer
     messages.append({"role" : "assistant", "content" : st.session_state["response"]})
     print(answer)
+    st.write(answer)
+    print(str(answer))
     if st.session_state["response"]:
         with st.chat_message("assistant"):
             st.markdown(st.session_state["response"])
