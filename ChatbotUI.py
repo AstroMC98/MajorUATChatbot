@@ -73,6 +73,8 @@ def get_relevant_context(query, limit = 5):
         unique_filenames = list(set(filenames))
         if "FINE-TUNE" in unique_filenames:
             unique_filenames.remove("FINE-TUNE")
+        if not unique_filenames:
+            unique_filenames = ['Chunked AYNTK SOPs']
         
         FN_DOC = [f"CONTEXT_SOURCE_FILE:{file}\nCONTENT:{docu}\n" if file != 'FINE-TUNE' else f"CONTEXT_SOURCE_FILE:{unique_filenames[0]}\nCONTENT:{docu}\n" for file,docu in list(zip(filenames, documents))]
         context_data = "\n".join(FN_DOC)
