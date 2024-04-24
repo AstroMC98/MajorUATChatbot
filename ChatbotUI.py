@@ -2,7 +2,6 @@ __import__('pysqlite3')
 import sys
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
-import os
 import streamlit as st
 import openai
 import json
@@ -256,5 +255,5 @@ if st.session_state["response"]:
     if feedback:
         # Placeholder for logging
         
-        os.write(1, feedback)
+        # os.write(1, feedback)
         st.toast("Feedback recorded!", icon="📝")
