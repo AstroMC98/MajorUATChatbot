@@ -116,7 +116,7 @@ import tiktoken
 def num_tokens_from_messages(messages):
     """Returns the number of tokens used by a list of messages."""
     try:
-        encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
+        encoding = tiktoken.encoding_for_model("gpt-4")
     except KeyError:
         encoding = tiktoken.get_encoding("cl100k_base")
 
@@ -167,8 +167,8 @@ if "messages" not in st.session_state:
         {"role": "assistant", "content": "How can I help you? Leave feedback to help me improve!"}
     ]
     
-# if "response" not in st.session_state:
-#     st.session_state["response"] = ''
+if "response" not in st.session_state:
+    st.session_state["response"] = ''
     
 messages = st.session_state.messages
 for msg in messages:
@@ -205,7 +205,7 @@ if prompt := st.chat_input(placeholder="What do you want to know about Major Tra
     # Get Response
     response = OpenAIClient.chat.completions.create(
         messages=messages,
-        model="gpt-3.5-turbo",
+        model="gpt-4",
         temperature=0,
         n=1,
         tools = tools,
@@ -240,7 +240,7 @@ if prompt := st.chat_input(placeholder="What do you want to know about Major Tra
             )
     context_enhanced_response = OpenAIClient.chat.completions.create(
         messages=messages,
-        model="gpt-3.5-turbo",
+        model="gpt-4",
         temperature=0,
         n=1,
     )
