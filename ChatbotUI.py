@@ -175,7 +175,8 @@ messages = st.session_state.messages
 for msg in messages:
     try:
         if msg['role'] not in ['system', 'tool']:
-            print(msg['role'], msg)
+            st.write(msg['role'])
+            st.write(msg)
             with st.chat_message(msg['role']):
                 st.markdown(msg['content'])
         else:
