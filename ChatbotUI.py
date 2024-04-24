@@ -174,14 +174,9 @@ if "response" not in st.session_state:
 messages = st.session_state.messages
 for msg in messages:
     try:
-        if msg['role'] not in ['system', 'tool']:
-            st.write(msg['role'])
-            st.write(msg)
+        if msg['role'] in ['user', 'assistant']:
             with st.chat_message(msg['role']):
                 st.markdown(msg['content'])
-        else:
-            #print(msg)
-            pass
     except:
         pass
         #print(msg)
