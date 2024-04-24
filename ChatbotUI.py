@@ -59,10 +59,8 @@ logger = logging.getLogger(f"MajorTravelUAT")
 COHERE_KEY = st.secrets['COHERE_KEY']
 openai_api_key = st.secrets['OPENAI_API_KEY']
 
-# with st.sidebar:
-#     openai_api_key = st.text_input("OpenAI API Key", key="feedback_api_key", type="password")
-#     "[Get an OpenAI API key](https://platform.openai.com/account/api-keys)"
-    
+with st.sidebar:
+    StreamlitUser = st.text_input("Hi! May I know who is utilizing the tool?", key="StreamlitUser")
     
 ##### CONNECT TO DATABASE and OpenAI #####
 import chromadb
@@ -241,7 +239,7 @@ if prompt := st.chat_input(placeholder="What do you want to know about Major Tra
 
     
     messages.append({"role" : "user" , "content" : prompt})
-    logger.info(f"From User - {prompt}")
+    logger.info(f"From User {StreamlitUser} - {prompt}")
         
     # Get Response
     response = OpenAIClient.chat.completions.create(
@@ -292,7 +290,7 @@ if prompt := st.chat_input(placeholder="What do you want to know about Major Tra
     answer = context_enhanced_response.choices[0].message.content
     st.session_state["response"] = answer
     messages.append({"role" : "assistant", "content" : st.session_state["response"]})
-    logger.info(f"From Chatbot - {st.session_state['response']}")
+    logger.info(f"From Chatbot in response to User ({StreamlitUser}) - {st.session_state['response']}")
     if st.session_state["response"]:
         with st.chat_message("assistant"):
             st.markdown(st.session_state["response"])
@@ -309,6 +307,6 @@ if st.session_state["response"]:
         score = feedback_score_map.get(feedback["score"])
         if score is not None:
             feedback_str = f"{score} Answer : {feedback.get('text')}"
-            logger.info(f"Feedback - {feedback_str}")
+            logger.info(f"Feedback from {StreamlitUser}- {feedback_str}")
             
         st.toast("Feedback recorded!", icon="📝")
