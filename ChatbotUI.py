@@ -170,26 +170,24 @@ if "messages" not in st.session_state:
 if "response" not in st.session_state:
     st.session_state["response"] = ''
     
-# messages = st.session_state.messages
-# for msg in messages:
-#     try:
-#         if msg['role'] not in ['system', 'tool']:
-#             if "QUERY_CLEAN" not in msg['content']:
-#                 with st.chat_message(msg['role']):
-#                     st.markdown(msg['content'])
-#         else:
-#             #print(msg)
-#             pass
-#     except:
-#         pass
-#         #print(msg)
+messages = st.session_state.messages
+for msg in messages:
+    try:
+        if msg['role'] not in ['system', 'tool']:
+            if "QUERY_CLEAN" not in msg['content']:
+                with st.chat_message(msg['role']):
+                    st.markdown(msg['content'])
+        else:
+            #print(msg)
+            pass
+    except:
+        pass
+        #print(msg)
         
 # delete older completions to keep conversation under token limit
-messages = st.session_state.messages
 while num_tokens_from_messages(messages) >= 8192*0.8:
     print("Removing Older Texts due to token number!")
-    st.session_state.messages.pop(0)
-    messages = st.session_state.messages
+    messages.pop(0)
 print("Current number of Tokens : ",  num_tokens_from_messages(messages))
     
 if prompt := st.chat_input(placeholder="What do you want to know about Major Travel's SOPs"):
@@ -199,10 +197,6 @@ if prompt := st.chat_input(placeholder="What do you want to know about Major Tra
 
     
     messages.append({"role" : "user" , "content" : prompt})
-       
-    if not openai_api_key:
-        st.info("Please add your OpenAI API Key to continue.")
-        st.stop()
         
     # Get Response
     response = OpenAIClient.chat.completions.create(
