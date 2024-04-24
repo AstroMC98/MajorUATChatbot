@@ -39,7 +39,7 @@ def init_logging():
     # and duplicate the messages
 
     # create a custom logger
-    logger = logging.getLogger("foobar")
+    logger = logging.getLogger("MajorTravelUAT")
     if logger.handlers:  # logger is already setup, don't setup again
         return
     logger.propagate = False
@@ -53,8 +53,7 @@ def init_logging():
     logger.addHandler(handler)
 
 init_logging()
-logger = logging.getLogger("foobar")
-logger.info("Inside main")
+logger = logging.getLogger("MajorTravelUAT")
 
 COHERE_KEY = st.secrets['COHERE_KEY']
 openai_api_key = st.secrets['OPENAI_API_KEY']
@@ -242,6 +241,7 @@ if prompt := st.chat_input(placeholder="What do you want to know about Major Tra
 
     
     messages.append({"role" : "user" , "content" : prompt})
+    logger.info(f"From User - {prompt}")
         
     # Get Response
     response = OpenAIClient.chat.completions.create(
@@ -290,6 +290,7 @@ if prompt := st.chat_input(placeholder="What do you want to know about Major Tra
     answer = context_enhanced_response.choices[0].message.content
     st.session_state["response"] = answer
     messages.append({"role" : "assistant", "content" : st.session_state["response"]})
+    logger.info(f"From Chatbot - {st.session_state["response"]}")
     if st.session_state["response"]:
         with st.chat_message("assistant"):
             st.markdown(st.session_state["response"])
