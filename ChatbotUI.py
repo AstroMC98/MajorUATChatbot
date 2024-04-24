@@ -167,8 +167,8 @@ if "messages" not in st.session_state:
         {"role": "assistant", "content": "How can I help you? Leave feedback to help me improve!"}
     ]
     
-if "response" not in st.session_state:
-    st.session_state["response"] = ''
+# if "response" not in st.session_state:
+#     st.session_state["response"] = ''
     
 messages = st.session_state.messages
 for msg in messages:
