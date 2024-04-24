@@ -51,22 +51,29 @@ def get_relevant_context(query, limit = 5):
     relevant_context = collection.query(
         query_texts = [query],
         n_results = limit,
-        include=["documents","distances"]
+        include=["documents","distances","metadatas"]
     )
     
     distance_threshold = 0.6
     documents = []
-    for dist_lst, document_lst in list(zip(relevant_context['distances'], relevant_context['documents'])):
-        for dst, doc in list(zip(dist_lst, document_lst)):
+    metadatas = []
+    for dist_lst, document_lst, meta_lst in list(zip(relevant_context['distances'], relevant_context['documents'], relevant_context['metadatas'])):
+        for dst, doc, meta in list(zip(dist_lst, document_lst, meta_lst)):
             if dst <= distance_threshold:
                 documents.append(doc) 
+                metadatas.append(meta)
         
                          
     if documents:
+        index2doc = {doc : i for i,doc in enumerate(documents)}
         results = co.rerank(query=query, documents=documents, top_n=2, model='rerank-english-v3.0', return_documents=True)   
         documents = [str(r.document.text) for r in results.results] 
-        context_data = "\n".join(documents)
-        context_str = f"You may use the following SOP Documents (in json format) to answer the question:\n{context_data}"
+        document_indexes = [index2doc[doc] for doc in documents]
+        filenames = [metadatas[i] for i in document_indexes]
+        
+        FN_DOC = [f"CONTEXT_SOURCE_FILE:{file}\nCONTENT:{docu}\n" for file,docu in list(zip(filenames, documents)) ]
+        context_data = "\n".join(FN_DOC)
+        context_str = f"You may use the following SOP Documents to answer the question:\n{context_data}"
         return context_str
     else:
         return "NO RELEVANT CONTEXT FOUND"
@@ -131,7 +138,9 @@ If the requested information is not found in the provided documents, you have th
 2. For follow-up queries where the current chat context is insufficient, inform the user that the current context cannot adequately address their query and utilize the function `get_relevant_context` to search for more relevant SOPs.
 3. If there is no relevant context found, simply say that the information cannot be found within the company's SOPs.
 
-Answer ONLY with the facts extracted from the ChromaDB. If there isn't enough information, say you don't know. Do not generate answers that don't use the sources provided to you. If asking a clarifying question to the user would help, ask the question."""
+Answer ONLY with the facts extracted from the ChromaDB. If there isn't enough information, say you don't know. Do not generate answers that don't use the sources provided to you. If asking a clarifying question to the user would help, ask the question.
+To help in monitoring performance, include the CONTEXT_SOURCE_FILE of the relevant context extracted in the form of a header.
+"""
 ########################################
     
 st.title("📝 Major Travel Chatbot UAT Platform")
