@@ -175,7 +175,8 @@ for msg in messages:
     try:
         if msg['role'] not in ['system', 'tool']:
             if "QUERY_CLEAN" not in msg['content']:
-                st.chat_message(msg['role']).write(msg['content'])
+                with st.chat_message(msg['role']):
+                    st.markdown(msg['content'])
         else:
             #print(msg)
             pass
@@ -191,7 +192,8 @@ print("Current number of Tokens : ",  num_tokens_from_messages(messages))
     
 if prompt := st.chat_input(placeholder="What do you want to know about Major Travel's SOPs"):
     
-    st.chat_message("user").write(prompt)
+    with st.chat_message("user"):
+        st.markdown(prompt)
 
     
     messages.append({"role" : "user" , "content" : prompt})
@@ -248,7 +250,7 @@ if prompt := st.chat_input(placeholder="What do you want to know about Major Tra
     st.session_state["response"] = answer
     with st.chat_message("assistant"):
         messages.append({"role" : "assistant", "content" : st.session_state["response"]})
-        st.write(st.session_state["response"])
+        st.markdown(st.session_state["response"])
         
 if st.session_state["response"]:
     feedback = streamlit_feedback(
