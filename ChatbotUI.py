@@ -241,60 +241,61 @@ if StreamlitUser:
         
         messages.append({"role" : "user" , "content" : prompt})
         logger.info(f"From User {StreamlitUser} - {prompt}")
-            
-        # Get Response
-        response = OpenAIClient.chat.completions.create(
-            messages=messages,
-            model="gpt-4",
-            temperature=0,
-            n=1,
-            seed = 82598,
-            tools = tools,
-            tool_choice = "auto"
-        )
-        
-        response_message = response.choices[0].message
-        tool_calls = response_message.tool_calls
-        
-        if tool_calls:
-            available_fxns = {
-                "get_relevant_context" : get_relevant_context
-            }
-            
-            messages.append(response_message),
-            
-            for tool_call in tool_calls:
-                fxn_name = tool_call.function.name
-                fxn_to_call = available_fxns[fxn_name]
-                fxn_args = json.loads(tool_call.function.arguments)
-                fxn_response = fxn_to_call(
-                    **fxn_args
+
+        with st.chat_message("assistant"):
+            with st.spinner("Looking Up Answer 📖..."):
+                # Get Response
+                response = OpenAIClient.chat.completions.create(
+                    messages=messages,
+                    model="gpt-4",
+                    temperature=0,
+                    n=1,
+                    seed = 82598,
+                    tools = tools,
+                    tool_choice = "auto"
                 )
                 
-                messages.append(
-                    {
-                        "tool_call_id" : tool_call.id,
-                        "role" : "tool",
-                        "name" : fxn_name,
-                        "content" : fxn_response
+                response_message = response.choices[0].message
+                tool_calls = response_message.tool_calls
+                
+                if tool_calls:
+                    available_fxns = {
+                        "get_relevant_context" : get_relevant_context
                     }
+                    
+                    messages.append(response_message),
+                    
+                    for tool_call in tool_calls:
+                        fxn_name = tool_call.function.name
+                        fxn_to_call = available_fxns[fxn_name]
+                        fxn_args = json.loads(tool_call.function.arguments)
+                        fxn_response = fxn_to_call(
+                            **fxn_args
+                        )
+                        
+                        messages.append(
+                            {
+                                "tool_call_id" : tool_call.id,
+                                "role" : "tool",
+                                "name" : fxn_name,
+                                "content" : fxn_response
+                            }
+                        )
+                context_enhanced_response = OpenAIClient.chat.completions.create(
+                    messages=messages,
+                    model="gpt-4",
+                    seed = 82598,
+                    temperature=0,
+                    n=1,
                 )
-        context_enhanced_response = OpenAIClient.chat.completions.create(
-            messages=messages,
-            model="gpt-4",
-            seed = 82598,
-            temperature=0,
-            n=1,
-        )
-        
-        # Extract Answer
-        answer = context_enhanced_response.choices[0].message.content
-        st.session_state["response"] = answer
-        messages.append({"role" : "assistant", "content" : st.session_state["response"]})
-        logger.info(f"From Chatbot in response to User ({StreamlitUser}) - {st.session_state['response']}")
-        if st.session_state["response"]:
-            with st.chat_message("assistant"):
-                st.markdown(st.session_state["response"])
+                
+                # Extract Answer
+                answer = context_enhanced_response.choices[0].message.content
+                st.session_state["response"] = answer
+                messages.append({"role" : "assistant", "content" : st.session_state["response"]})
+                logger.info(f"From Chatbot in response to User ({StreamlitUser}) - {st.session_state['response']}")
+                if st.session_state["response"]:
+                    st.markdown(st.session_state["response"])
             
     if st.session_state["response"]:
         feedback = streamlit_feedback(
