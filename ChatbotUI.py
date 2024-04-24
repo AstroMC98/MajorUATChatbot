@@ -175,9 +175,9 @@ messages = st.session_state.messages
 for msg in messages:
     try:
         if msg['role'] not in ['system', 'tool']:
-            if "QUERY_CLEAN" not in msg['content']:
-                with st.chat_message(msg['role']):
-                    st.markdown(msg['content'])
+            print(msg['role'], msg)
+            with st.chat_message(msg['role']):
+                st.markdown(msg['content'])
         else:
             #print(msg)
             pass
@@ -246,9 +246,6 @@ if prompt := st.chat_input(placeholder="What do you want to know about Major Tra
     answer = context_enhanced_response.choices[0].message.content
     st.session_state["response"] = answer
     messages.append({"role" : "assistant", "content" : st.session_state["response"]})
-    print(answer)
-    st.write(answer)
-    print(str(answer))
     if st.session_state["response"]:
         with st.chat_message("assistant"):
             st.markdown(st.session_state["response"])
