@@ -61,7 +61,7 @@ def get_relevant_context(query, limit = 5):
         for dst, doc, meta in list(zip(dist_lst, document_lst, meta_lst)):
             if dst <= distance_threshold:
                 documents.append(doc) 
-                metadatas.append(meta)
+                metadatas.append(meta['Filename'])
         
                          
     if documents:
@@ -70,8 +70,10 @@ def get_relevant_context(query, limit = 5):
         documents = [str(r.document.text) for r in results.results] 
         document_indexes = [index2doc[doc] for doc in documents]
         filenames = [metadatas[i] for i in document_indexes]
+        unique_filenames = list[set(filenames)]
+        unique_filenames.remove("FINE-TUNE")
         
-        FN_DOC = [f"CONTEXT_SOURCE_FILE:{file}\nCONTENT:{docu}\n" for file,docu in list(zip(filenames, documents)) ]
+        FN_DOC = [f"CONTEXT_SOURCE_FILE:{file}\nCONTENT:{docu}\n" if file != 'FINE-TUNE' else f"CONTEXT_SOURCE_FILE:{unique_filenames[0]}\nCONTENT:{docu}\n" for file,docu in list(zip(filenames, documents))]
         context_data = "\n".join(FN_DOC)
         context_str = f"You may use the following SOP Documents to answer the question:\n{context_data}"
         return context_str
@@ -140,8 +142,8 @@ If the requested information is not found in the provided documents, you have th
 
 Answer ONLY with the facts extracted from the ChromaDB. If there isn't enough information, say you don't know. Do not generate answers that don't use the sources provided to you. If asking a clarifying question to the user would help, ask the question.
 
-To help in monitoring performance, include the CONTEXT_SOURCE_FILE of the relevant context extracted in the form of a header (if from FINE-TUNE, use the next relevant CONTEXT_SOURCE_FILE). 
-Use the following response template:
+To help in monitoring performance, include the CONTEXT_SOURCE_FILE of the relevant context extracted in the form of a header (if from FINE-TUNE, use the next relevant. 
+Use the following response template if you were able to answer the question, else use the standard response.:
 
 FROM CONTEXT FOUND IN {CONTEXT_SOURCE_FILE}
 {PROMPT_RESPONSE}
