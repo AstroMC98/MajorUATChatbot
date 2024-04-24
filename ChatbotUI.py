@@ -53,14 +53,8 @@ def init_logging():
     logger.addHandler(handler)
 
 init_logging()
-from streamlit.runtime import get_instance
-from streamlit.runtime.scriptrunner import get_script_run_ctx
-runtime = get_instance()
-session_id_ = get_script_run_ctx().session_id
-st_session_info = runtime._session_mgr.get_session_info(session_id_).session()
 
 logger = logging.getLogger(f"MajorTravelUAT")
-logger.info(f"Initializing Session {st_session_info}")
 
 COHERE_KEY = st.secrets['COHERE_KEY']
 openai_api_key = st.secrets['OPENAI_API_KEY']
