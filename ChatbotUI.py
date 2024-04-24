@@ -66,7 +66,7 @@ def get_relevant_context(query, limit = 5):
                          
     if documents:
         index2doc = {doc : i for i,doc in enumerate(documents)}
-        results = co.rerank(query=query, documents=documents, top_n=2, model='rerank-english-v3.0', return_documents=True)   
+        results = co.rerank(query=query, documents=documents, top_n=3, model='rerank-english-v3.0', return_documents=True)   
         documents = [str(r.document.text) for r in results.results] 
         document_indexes = [index2doc[doc] for doc in documents]
         filenames = [metadatas[i] for i in document_indexes]
@@ -139,7 +139,13 @@ If the requested information is not found in the provided documents, you have th
 3. If there is no relevant context found, simply say that the information cannot be found within the company's SOPs.
 
 Answer ONLY with the facts extracted from the ChromaDB. If there isn't enough information, say you don't know. Do not generate answers that don't use the sources provided to you. If asking a clarifying question to the user would help, ask the question.
-To help in monitoring performance, include the CONTEXT_SOURCE_FILE of the relevant context extracted in the form of a header.
+
+To help in monitoring performance, include the CONTEXT_SOURCE_FILE of the relevant context extracted in the form of a header (if from FINE-TUNE, use the next relevant CONTEXT_SOURCE_FILE). 
+Use the following response template:
+
+FROM CONTEXT FOUND IN {CONTEXT_SOURCE_FILE}
+{PROMPT_RESPONSE}
+
 """
 ########################################
     
