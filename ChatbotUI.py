@@ -170,19 +170,19 @@ if "messages" not in st.session_state:
 if "response" not in st.session_state:
     st.session_state["response"] = ''
     
-messages = st.session_state.messages
-for msg in messages:
-    try:
-        if msg['role'] not in ['system', 'tool']:
-            if "QUERY_CLEAN" not in msg['content']:
-                with st.chat_message(msg['role']):
-                    st.markdown(msg['content'])
-        else:
-            #print(msg)
-            pass
-    except:
-        pass
-        #print(msg)
+# messages = st.session_state.messages
+# for msg in messages:
+#     try:
+#         if msg['role'] not in ['system', 'tool']:
+#             if "QUERY_CLEAN" not in msg['content']:
+#                 with st.chat_message(msg['role']):
+#                     st.markdown(msg['content'])
+#         else:
+#             #print(msg)
+#             pass
+#     except:
+#         pass
+#         #print(msg)
         
 # delete older completions to keep conversation under token limit
 while num_tokens_from_messages(messages) >= 8192*0.8:
