@@ -185,9 +185,11 @@ if "response" not in st.session_state:
 #         #print(msg)
         
 # delete older completions to keep conversation under token limit
+messages = st.session_state.messages
 while num_tokens_from_messages(messages) >= 8192*0.8:
     print("Removing Older Texts due to token number!")
-    messages.pop(0)
+    st.session_state.messages.pop(0)
+    messages = st.session_state.messages
 print("Current number of Tokens : ",  num_tokens_from_messages(messages))
     
 if prompt := st.chat_input(placeholder="What do you want to know about Major Travel's SOPs"):
