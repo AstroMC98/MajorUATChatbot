@@ -71,7 +71,8 @@ def get_relevant_context(query, limit = 5):
         document_indexes = [index2doc[doc] for doc in documents]
         filenames = [metadatas[i] for i in document_indexes]
         unique_filenames = list[set(filenames)]
-        unique_filenames.remove("FINE-TUNE")
+        if "FINE-TUNE" in unique_filenames:
+            unique_filenames.remove("FINE-TUNE")
         
         FN_DOC = [f"CONTEXT_SOURCE_FILE:{file}\nCONTENT:{docu}\n" if file != 'FINE-TUNE' else f"CONTEXT_SOURCE_FILE:{unique_filenames[0]}\nCONTENT:{docu}\n" for file,docu in list(zip(filenames, documents))]
         context_data = "\n".join(FN_DOC)
