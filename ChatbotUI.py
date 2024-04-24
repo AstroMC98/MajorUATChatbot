@@ -53,7 +53,7 @@ def init_logging():
     logger.propagate = False
     logger.setLevel(logging.INFO)
     # in the formatter, use the variable "user_ip"
-    formatter = logging.Formatter("%(name)s %(asctime)s %(levelname)s [user_ip=%(user_ip)s] [session_id=%(session_id)s] - %(message)s")
+    formatter = logging.Formatter("%(name)s %(asctime)s %(levelname)s [user_ip=%(user_ip)s] - %(message)s")
     handler = logging.StreamHandler()
     handler.setLevel(logging.INFO)
     handler.addFilter(ContextFilter())
@@ -61,7 +61,8 @@ def init_logging():
     logger.addHandler(handler)
 
 init_logging()
-logger = logging.getLogger("MajorTravelUAT")
+logger = logging.getLogger(f"MajorTravelUAT - {session_info}")
+logger.info(f"Initializing Session {session_info}")
 
 COHERE_KEY = st.secrets['COHERE_KEY']
 openai_api_key = st.secrets['OPENAI_API_KEY']
