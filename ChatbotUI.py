@@ -70,7 +70,7 @@ def get_relevant_context(query, limit = 5):
         documents = [str(r.document.text) for r in results.results] 
         document_indexes = [index2doc[doc] for doc in documents]
         filenames = [metadatas[i] for i in document_indexes]
-        unique_filenames = list[set(filenames)]
+        unique_filenames = list(set(filenames))
         if "FINE-TUNE" in unique_filenames:
             unique_filenames.remove("FINE-TUNE")
         
