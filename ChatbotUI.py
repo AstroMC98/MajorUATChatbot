@@ -249,6 +249,7 @@ if prompt := st.chat_input(placeholder="What do you want to know about Major Tra
         model="gpt-3.5-turbo",
         temperature=0,
         n=1,
+        seed = 82598,
         tools = tools,
         tool_choice = "auto"
     )
@@ -282,6 +283,7 @@ if prompt := st.chat_input(placeholder="What do you want to know about Major Tra
     context_enhanced_response = OpenAIClient.chat.completions.create(
         messages=messages,
         model="gpt-3.5-turbo",
+        seed = 82598,
         temperature=0,
         n=1,
     )
