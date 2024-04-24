@@ -12,13 +12,6 @@ import logging
 from streamlit import runtime
 from streamlit.runtime.scriptrunner import get_script_run_ctx
 
-
-from streamlit.runtime import get_instance
-from streamlit.runtime.scriptrunner import get_script_run_ctx
-runtime = get_instance()
-session_id_ = get_script_run_ctx().session_id
-session_info = runtime._session_mgr.get_session_info(session_id_)
-
 def get_remote_ip() -> str:
     """Get remote ip."""
 
@@ -38,7 +31,6 @@ def get_remote_ip() -> str:
 class ContextFilter(logging.Filter):
     def filter(self, record):
         record.user_ip = get_remote_ip()
-        record.session_id = session_info
         return super().filter(record)
 
 def init_logging():
@@ -61,8 +53,14 @@ def init_logging():
     logger.addHandler(handler)
 
 init_logging()
-logger = logging.getLogger(f"MajorTravelUAT - {session_info}")
-logger.info(f"Initializing Session {session_info}")
+from streamlit.runtime import get_instance
+from streamlit.runtime.scriptrunner import get_script_run_ctx
+runtime = get_instance()
+session_id_ = get_script_run_ctx().session_id
+st_session_info = runtime._session_mgr.get_session_info(session_id_)
+
+logger = logging.getLogger(f"MajorTravelUAT")
+logger.info(f"Initializing Session {st_session_info}")
 
 COHERE_KEY = st.secrets['COHERE_KEY']
 openai_api_key = st.secrets['OPENAI_API_KEY']
