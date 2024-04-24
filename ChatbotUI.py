@@ -244,18 +244,20 @@ if prompt := st.chat_input(placeholder="What do you want to know about Major Tra
     # Extract Answer
     answer = context_enhanced_response.choices[0].message.content
     st.session_state["response"] = answer
-    with st.chat_message("assistant"):
-        messages.append({"role" : "assistant", "content" : st.session_state["response"]})
-        st.markdown(st.session_state["response"])
+    messages.append({"role" : "assistant", "content" : st.session_state["response"]})
+    print(answer)
+    if st.session_state["response"]:
+        with st.chat_message("assistant"):
+            st.markdown(st.session_state["response"])
         
-# if st.session_state["response"]:
-#     feedback = streamlit_feedback(
-#         feedback_type="thumbs",
-#         optional_text_label="[Optional] Please provide an explanation",
-#         key = f"feedback_{len(messages)}"
-#     )
-#     if feedback:
-#         # Placeholder for logging
+if st.session_state["response"]:
+    feedback = streamlit_feedback(
+        feedback_type="thumbs",
+        optional_text_label="[Optional] Please provide an explanation",
+        key = f"feedback_{len(messages)}"
+    )
+    if feedback:
+        # Placeholder for logging
         
-#         print(feedback)
-#         st.toast("Feedback recorded!", icon="📝")
+        print(feedback)
+        st.toast("Feedback recorded!", icon="📝")
