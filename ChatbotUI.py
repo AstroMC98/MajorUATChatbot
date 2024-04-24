@@ -255,5 +255,5 @@ if st.session_state["response"]:
     if feedback:
         # Placeholder for logging
         
-        print(feedback)
+        os.write(feedback)
         st.toast("Feedback recorded!", icon="📝")
