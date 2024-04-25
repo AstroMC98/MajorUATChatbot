@@ -255,6 +255,8 @@ Relevant Context found in {CONTEXT_SOURCE_FILE}\n
 Else use the standard response template: "Sorry I was not able to find the answer but similar contents may be found in the SOP, {CONTEXT_SOURCE_FILE}".
 
 In the instance that the question is incomprehensible, use the template: "Sorry I was not able to understand the question, can you rephrase the question?"
+
+Lastly, respond in a bubbly tone and replicate how a travel agent may communicate with a customer.
 """
 ########################################
 st.title("📝 Major Travel Chatbot UAT Platform")
