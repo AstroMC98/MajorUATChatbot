@@ -178,7 +178,7 @@ def get_relevant_question_context(query, limit = 10):
         {context_data}
 
         If multiple possible answers are found, ask clarifying questions to the user.
-        If context is insufficient, use the standard response template: "Sorry I was not able to find the answer but similar contents may be found in the SOP, {CONTEXT_SOURCE_FILE}".
+        If context is insufficient, use the standard response template: "Sorry I was not able to find the answer but similar contents may be found in the SOP, <CONTEXT_SOURCE_FILE>".
         """
         return context_str
         
