@@ -136,6 +136,7 @@ def get_relevant_question_context(query, limit = 10):
     metadatas = []
     for dist_lst, document_lst, meta_lst in list(zip(relevant_questions['distances'], relevant_questions['documents'], relevant_questions['metadatas'])):
         for dst, doc, meta in list(zip(dist_lst, document_lst, meta_lst)):
+            logger.info(f"{doc} - {mt['Filename']}--{mt['Section Name']} - dst")
             if dst <= distance_threshold:
                 questions.append(doc) 
                 metadatas.append(meta)
@@ -178,7 +179,6 @@ def get_relevant_question_context(query, limit = 10):
         {context_data}
 
         If multiple possible answers are found, ask clarifying questions to the user.
-        If context is insufficient, use the standard response template: "Sorry I was not able to find the answer but similar contents may be found in the SOP, <CONTEXT_SOURCE_FILE>".
         """
         return context_str
         
@@ -254,6 +254,8 @@ Use the following response template if you were able to answer the user's questi
 
 Relevant Context found in {CONTEXT_SOURCE_FILE}\n
 {PROMPT_RESPONSE}
+ 
+If still cannot anwer a question after clarifying questions, use the standard response template: "Sorry I was not able to find the answer but similar contents may be found in the SOP : {CONTEXT_SOURCE_FILE}
 
 In the instance that the question is incomprehensible, use the template: "Sorry I was not able to understand the question, can you rephrase the question?"
 Lastly, respond in a bubbly tone and replicate how a travel agent may communicate with a customer.
