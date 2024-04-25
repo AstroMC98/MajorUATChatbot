@@ -221,9 +221,6 @@ if StreamlitUser:
     for msg in messages:
         try:
             if msg['role'] in ['user', 'assistant']:
-                if msg['role'] == 'assistant':
-                    if msg.tool_calls:
-                        continue
                 with st.chat_message(msg['role']):
                     st.markdown(msg['content'])
         except:
