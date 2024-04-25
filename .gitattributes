@@ -1,1 +1,6 @@
 chromadb_major_travel/chroma.sqlite3 filter=lfs diff=lfs merge=lfs -text
+major_travel_experimental/* filter=lfs diff=lfs merge=lfs -text
+major_travel_experimental/*.sqlite3 filter=lfs diff=lfs merge=lfs -text
+major_travel_experimental/chroma.sqlite3 filter=lfs diff=lfs merge=lfs -text
+major_travel_experimental/6bc051d2-2b04-4523-83f9-71681bc911e8/data_level0.bin filter=lfs diff=lfs merge=lfs -text
+major_travel_experimental/87f0f3a7-18b6-4dfe-941a-2b02b38c30b4/data_level0.bin filter=lfs diff=lfs merge=lfs -text
