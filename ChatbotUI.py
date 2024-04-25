@@ -93,6 +93,29 @@ questions_collection = client.get_or_create_collection(
     metadata = {"hnsw:space" : "cosine"}
 )
 
+# Startup ChromaDB with Initial Query
+qcol_init = questions_collection.query(
+        query_texts = ["Initialize Collection"],
+        n_results = 5,
+        include=["documents","distances","metadatas"]
+    )
+
+logger.info(f"Succesfully Initialized Hypothetical Questions Database")
+
+dcol_init = document_collection.query(
+        query_texts = ["Initialize Collection"],
+        n_results = 5,
+        include=["documents","distances","metadatas"]
+    )
+
+logger.info(f"Succesfully Initialized Documents Database")
+
+del qcol_init
+del dcol_init
+
+######################################
+
+
 OpenAIClient = openai.OpenAI(
     api_key=openai_api_key,
 )
