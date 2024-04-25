@@ -66,9 +66,8 @@ with st.sidebar:
 import chromadb
 from chromadb.utils import embedding_functions
 
-CHROMA_DATA_PATH = 'major_travel_experimental/'
-HYPO_COLLECTION_NAME = "hypothetical_embeddings"
-DOCS_COLLECTION_NAME = "document_embeddings"
+CHROMA_DATA_PATH = 'chromadb_major_travel/'
+COLLECTION_NAME = "document_embeddings"
 
 def text_embedding(text):
     response = openai.Embedding.create(model="text-embedding-3-small", input=text)
@@ -80,41 +79,11 @@ openai_ef = embedding_functions.OpenAIEmbeddingFunction(
             )
 
 client = chromadb.PersistentClient(path = CHROMA_DATA_PATH)
-
-document_collection = client.get_or_create_collection(
-    name = DOCS_COLLECTION_NAME,
+collection = client.get_or_create_collection(
+    name = COLLECTION_NAME,
     embedding_function = openai_ef,
     metadata = {"hnsw:space" : "cosine"}
 )
-
-questions_collection = client.get_or_create_collection(
-    name = HYPO_COLLECTION_NAME,
-    embedding_function = openai_ef,
-    metadata = {"hnsw:space" : "cosine"}
-)
-
-# Startup ChromaDB with Initial Query
-qcol_init = questions_collection.query(
-        query_texts = ["Initialize Collection"],
-        n_results = 5,
-        include=["documents","distances","metadatas"]
-    )
-
-logger.info(f"Succesfully Initialized Hypothetical Questions Database")
-
-dcol_init = document_collection.query(
-        query_texts = ["Initialize Collection"],
-        n_results = 5,
-        include=["documents","distances","metadatas"]
-    )
-
-logger.info(f"Succesfully Initialized Documents Database")
-
-del qcol_init
-del dcol_init
-
-######################################
-
 
 OpenAIClient = openai.OpenAI(
     api_key=openai_api_key,
@@ -124,64 +93,46 @@ OpenAIClient = openai.OpenAI(
 #### DEFINE FUNCTION CALLS ##############
 import cohere
 co = cohere.Client(COHERE_KEY)
-def get_relevant_question_context(query, limit = 10):
-    relevant_questions = questions_collection.query(
+def get_relevant_context(query, limit = 5):
+    relevant_context = collection.query(
         query_texts = [query],
         n_results = limit,
         include=["documents","distances","metadatas"]
     )
     
     distance_threshold = 0.6
-    questions = []
+    documents = []
     metadatas = []
-    for dist_lst, document_lst, meta_lst in list(zip(relevant_questions['distances'], relevant_questions['documents'], relevant_questions['metadatas'])):
+    for dist_lst, document_lst, meta_lst in list(zip(relevant_context['distances'], relevant_context['documents'], relevant_context['metadatas'])):
         for dst, doc, meta in list(zip(dist_lst, document_lst, meta_lst)):
             if dst <= distance_threshold:
-                questions.append(doc) 
-                metadatas.append(meta)
+                documents.append(doc) 
+                metadatas.append(meta['Filename'])
         
-                    
-    if questions:
-        index2doc = {doc : i for i,doc in enumerate(questions)}
-        results = co.rerank(query=query, documents=questions, top_n=5, model='rerank-english-v3.0', return_documents=True)   
-        questions = [str(r.document.text) for r in results.results] 
-        questions_indexes = [index2doc[doc] for doc in questions]
-        relevant_metadatas = [metadatas[i] for i in questions_indexes] 
+                         
+    if documents:
+        index2doc = {doc : i for i,doc in enumerate(documents)}
+        results = co.rerank(query=query, documents=documents, top_n=3, model='rerank-english-v3.0', return_documents=True)   
+        documents = [str(r.document.text) for r in results.results] 
+        document_indexes = [index2doc[doc] for doc in documents]
+        filenames = [metadatas[i] for i in document_indexes]
+        unique_filenames = list(set(filenames))
+        if "FINE-TUNE" in unique_filenames:
+            unique_filenames.remove("FINE-TUNE")
+        if not unique_filenames:
+            unique_filenames = ['Chunked AYNTK SOPs']
         
-        unique_metadatas = [dict(t) for t in {tuple(d.items()) for d in relevant_metadatas}]
-        print(unique_metadatas)
-        filenames = [f"{mt['Filename']}-{mt['Section Name']}" for mt in unique_metadatas]
-        
-        relevant_raw_documents = []
-        for relevant_q_meta in unique_metadatas:
-            meta_filter = {"$and": [{k : {"$eq" : v}} 
-                                    for k,v in relevant_q_meta.items()
-                                    if k != 'document_index']}
-            rds = document_collection.get(where=meta_filter,
-                                        include=['documents'])
-            try:
-                relevant_raw_documents.append(rds['documents'][0])
-            except IndexError:
-                pass
-        relevant_raw_documents = list(set(relevant_raw_documents))
-        doc2filename = {docu:file for docu, file in list(zip(relevant_raw_documents, filenames))}
-        
-        doc_rerank = co.rerank(query=query, documents=relevant_raw_documents, top_n=3, model='rerank-english-v3.0', return_documents=True)   
-        reranked_documents = [str(r.document.text) for r in doc_rerank.results] 
-        reranked_filenames = [doc2filename[rrd] for rrd in reranked_documents]
-        
-        FN_DOC = [f"CONTEXT_SOURCE_FILE:{file}\nCONTENT:{docu}\n" for file,docu in list(zip(reranked_filenames, reranked_documents))]
+        FN_DOC = [f"CONTEXT_SOURCE_FILE:{file}\nCONTENT:{docu}\n" if file != 'FINE-TUNE' else f"CONTEXT_SOURCE_FILE:{unique_filenames[0]}\nCONTENT:{docu}\n" for file,docu in list(zip(filenames, documents))]
         context_data = "\n".join(FN_DOC)
         context_str = f"You may use the following SOP Documents to answer the question:\n{context_data}"
         return context_str
-        
     else:
         return "NO RELEVANT CONTEXT FOUND"
 
-SIGNATURE_get_relevant_question_context = {
+SIGNATURE_get_relevant_context = {
     "type" : "function",
     "function" : {
-        "name" : "get_relevant_question_context",
+        "name" : "get_relevant_context",
         "description" : "Get related SOPs to use as context from ChromaDB",
         "parameters" : {
             "type" : "object",
@@ -201,7 +152,7 @@ SIGNATURE_get_relevant_question_context = {
     
 }
 
-tools = [SIGNATURE_get_relevant_question_context]
+tools = [SIGNATURE_get_relevant_context]
 
 #######################################
 
@@ -211,7 +162,7 @@ import tiktoken
 def num_tokens_from_messages(messages):
     """Returns the number of tokens used by a list of messages."""
     try:
-        encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
+        encoding = tiktoken.encoding_for_model("gpt-4")
     except KeyError:
         encoding = tiktoken.get_encoding("cl100k_base")
 
@@ -235,9 +186,6 @@ As a travel agent assistant for Major Travel, your role involves strictly adheri
 Your primary objective is to support senior colleagues in identifying the most relevant references based on company SOPs and assisting them with their daily tasks.
 As such you are expected to undestand the language of people working in travel agencies (e.g. they may use the word "who do we use" to "which supplier/vendor do we use"), try to anticipate these types of
 vague questioning.
-
-If the question is populated by pronous, utilize a new query such that query is able to understand the context of pronouns better for document retrieval.
-One example is : "Who do we use for Iceland Excursions" can be improved by transforming it to "Who does Major Travel use for Iceland Excursions".
 
 If the requested information is not found in the provided documents, you have three options:
 1. If it's the initial query and you lack specific details to provide a precise answer, ask the user for additional information to better address their query.
@@ -273,6 +221,9 @@ if StreamlitUser:
     for msg in messages:
         try:
             if msg['role'] in ['user', 'assistant']:
+                if msg['role'] == 'assistant':
+                    if msg.tool_calls:
+                        continue
                 with st.chat_message(msg['role']):
                     st.markdown(msg['content'])
         except:
@@ -287,17 +238,17 @@ if StreamlitUser:
         
         with st.chat_message("user"):
             st.markdown(prompt)
+    
         
-        logger.info(f"From Prompt Cleaner of {StreamlitUser} - {prompt}")
         messages.append({"role" : "user" , "content" : prompt})
-        
+        logger.info(f"From User {StreamlitUser} - {prompt}")
 
         with st.chat_message("assistant"):
             with st.spinner("Looking Up Answer 📖..."):
                 # Get Response
                 response = OpenAIClient.chat.completions.create(
                     messages=messages,
-                    model="gpt-3.5-turbo",
+                    model="gpt-4",
                     temperature=0,
                     n=1,
                     seed = 82598,
@@ -311,7 +262,7 @@ if StreamlitUser:
                 
                 if tool_calls:
                     available_fxns = {
-                        "get_relevant_question_context" : get_relevant_question_context
+                        "get_relevant_context" : get_relevant_context
                     }
                     
                     messages.append(response_message),
@@ -334,7 +285,7 @@ if StreamlitUser:
                         )
                 context_enhanced_response = OpenAIClient.chat.completions.create(
                     messages=messages,
-                    model="gpt-3.5-turbo",
+                    model="gpt-4",
                     seed = 82598,
                     temperature=0,
                     n=1,
