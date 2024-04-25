@@ -253,6 +253,22 @@ Else use the standard response template: "Sorry I was not able to find the answe
 
 In the instance that the question is incomprehensible, use the template: "Sorry I was not able to understand the question, can you rephrase the question?"
 """
+
+prompt_cleaning = """
+Using the context:
+
+As a travel agent assistant for Major Travel, your role involves strictly adhering to the agency's standard operating procedures (SOPs) and internal tasks to ensure high-quality service delivery.
+Your primary objective is to support senior colleagues in identifying the most relevant references based on company SOPs and assisting them with their daily tasks.
+As such you are expected to undestand the language of people working in travel agencies (e.g. they may use the word "who do we use" to "which supplier/vendor do we use"), try to anticipate these types of
+vague questioning.
+
+Generate new query based such that query is able to understand the context of pronouns better for document retrieval.
+One example is : "Who do we use for Iceland Excursions" can be improved by transforming it to "Who does Major Travel use for Iceland Excursions".
+
+The prompt to transform is: {uncleaned_prompt}.
+
+Only return the improved prompt and nothing else.
+"""
 ########################################
 st.title("📝 Major Travel Chatbot UAT Platform")
 if StreamlitUser:
@@ -284,10 +300,23 @@ if StreamlitUser:
         
         with st.chat_message("user"):
             st.markdown(prompt)
-    
         
-        messages.append({"role" : "user" , "content" : prompt})
         logger.info(f"From User {StreamlitUser} - {prompt}")
+        cleaner_response = OpenAIClient.chat.completions.create(
+                    messages=[
+                        {'role' : 'system' ,
+                        'content' : prompt_cleaning.format(uncleaned_prompt = prompt)}
+                        ],
+                    model="gpt-3.5-turbo",
+                    temperature=0,
+                    n=1,
+                    seed = 82598
+                )
+                
+        prompt = cleaner_response.choices[0].message
+        logger.info(f"From Prompt Cleaner of {StreamlitUser} - {prompt}")
+        messages.append({"role" : "user" , "content" : prompt})
+        
 
         with st.chat_message("assistant"):
             with st.spinner("Looking Up Answer 📖..."):
