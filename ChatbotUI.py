@@ -66,8 +66,9 @@ with st.sidebar:
 import chromadb
 from chromadb.utils import embedding_functions
 
-CHROMA_DATA_PATH = 'chromadb_major_travel/'
-COLLECTION_NAME = "document_embeddings"
+CHROMA_DATA_PATH = 'chroma_sources/major_travel_experimental/'
+HYPO_COLLECTION_NAME = "hypothetical_embeddings"
+DOCS_COLLECTION_NAME = "document_embeddings"
 
 def text_embedding(text):
     response = openai.Embedding.create(model="text-embedding-3-small", input=text)
@@ -79,8 +80,15 @@ openai_ef = embedding_functions.OpenAIEmbeddingFunction(
             )
 
 client = chromadb.PersistentClient(path = CHROMA_DATA_PATH)
-collection = client.get_or_create_collection(
-    name = COLLECTION_NAME,
+
+document_collection = client.get_or_create_collection(
+    name = DOCS_COLLECTION_NAME,
+    embedding_function = openai_ef,
+    metadata = {"hnsw:space" : "cosine"}
+)
+
+questions_collection = client.get_or_create_collection(
+    name = HYPO_COLLECTION_NAME,
     embedding_function = openai_ef,
     metadata = {"hnsw:space" : "cosine"}
 )
@@ -93,46 +101,64 @@ OpenAIClient = openai.OpenAI(
 #### DEFINE FUNCTION CALLS ##############
 import cohere
 co = cohere.Client(COHERE_KEY)
-def get_relevant_context(query, limit = 5):
-    relevant_context = collection.query(
+def get_relevant_question_context(query, limit = 10):
+    relevant_questions = questions_collection.query(
         query_texts = [query],
         n_results = limit,
         include=["documents","distances","metadatas"]
     )
     
     distance_threshold = 0.6
-    documents = []
+    questions = []
     metadatas = []
-    for dist_lst, document_lst, meta_lst in list(zip(relevant_context['distances'], relevant_context['documents'], relevant_context['metadatas'])):
+    for dist_lst, document_lst, meta_lst in list(zip(relevant_questions['distances'], relevant_questions['documents'], relevant_questions['metadatas'])):
         for dst, doc, meta in list(zip(dist_lst, document_lst, meta_lst)):
             if dst <= distance_threshold:
-                documents.append(doc) 
-                metadatas.append(meta['Filename'])
+                questions.append(doc) 
+                metadatas.append(meta)
         
-                         
-    if documents:
-        index2doc = {doc : i for i,doc in enumerate(documents)}
-        results = co.rerank(query=query, documents=documents, top_n=3, model='rerank-english-v3.0', return_documents=True)   
-        documents = [str(r.document.text) for r in results.results] 
-        document_indexes = [index2doc[doc] for doc in documents]
-        filenames = [metadatas[i] for i in document_indexes]
-        unique_filenames = list(set(filenames))
-        if "FINE-TUNE" in unique_filenames:
-            unique_filenames.remove("FINE-TUNE")
-        if not unique_filenames:
-            unique_filenames = ['Chunked AYNTK SOPs']
+                    
+    if questions:
+        index2doc = {doc : i for i,doc in enumerate(questions)}
+        results = co.rerank(query=query, documents=questions, top_n=5, model='rerank-english-v3.0', return_documents=True)   
+        questions = [str(r.document.text) for r in results.results] 
+        questions_indexes = [index2doc[doc] for doc in questions]
+        relevant_metadatas = [metadatas[i] for i in questions_indexes] 
         
-        FN_DOC = [f"CONTEXT_SOURCE_FILE:{file}\nCONTENT:{docu}\n" if file != 'FINE-TUNE' else f"CONTEXT_SOURCE_FILE:{unique_filenames[0]}\nCONTENT:{docu}\n" for file,docu in list(zip(filenames, documents))]
+        unique_metadatas = [dict(t) for t in {tuple(d.items()) for d in relevant_metadatas}]
+        print(unique_metadatas)
+        filenames = [f"{mt['Filename']}-{mt['Section Name']}" for mt in unique_metadatas]
+        
+        relevant_raw_documents = []
+        for relevant_q_meta in unique_metadatas:
+            meta_filter = {"$and": [{k : {"$eq" : v}} 
+                                    for k,v in relevant_q_meta.items()
+                                    if k != 'document_index']}
+            rds = document_collection.get(where=meta_filter,
+                                        include=['documents'])
+            try:
+                relevant_raw_documents.append(rds['documents'][0])
+            except IndexError:
+                pass
+        relevant_raw_documents = list(set(relevant_raw_documents))
+        doc2filename = {docu:file for docu, file in list(zip(relevant_raw_documents, filenames))}
+        
+        doc_rerank = co.rerank(query=query, documents=relevant_raw_documents, top_n=3, model='rerank-english-v3.0', return_documents=True)   
+        reranked_documents = [str(r.document.text) for r in doc_rerank.results] 
+        reranked_filenames = [doc2filename[rrd] for rrd in reranked_documents]
+        
+        FN_DOC = [f"CONTEXT_SOURCE_FILE:{file}\nCONTENT:{docu}\n" for file,docu in list(zip(reranked_filenames, reranked_documents))]
         context_data = "\n".join(FN_DOC)
         context_str = f"You may use the following SOP Documents to answer the question:\n{context_data}"
         return context_str
+        
     else:
         return "NO RELEVANT CONTEXT FOUND"
 
-SIGNATURE_get_relevant_context = {
+SIGNATURE_get_relevant_question_context = {
     "type" : "function",
     "function" : {
-        "name" : "get_relevant_context",
+        "name" : "get_relevant_question_context",
         "description" : "Get related SOPs to use as context from ChromaDB",
         "parameters" : {
             "type" : "object",
@@ -152,7 +178,7 @@ SIGNATURE_get_relevant_context = {
     
 }
 
-tools = [SIGNATURE_get_relevant_context]
+tools = [SIGNATURE_get_relevant_question_context]
 
 #######################################
 
@@ -248,7 +274,7 @@ if StreamlitUser:
                 # Get Response
                 response = OpenAIClient.chat.completions.create(
                     messages=messages,
-                    model="gpt-4",
+                    model="gpt-3.5-turbo",
                     temperature=0,
                     n=1,
                     seed = 82598,
@@ -262,7 +288,7 @@ if StreamlitUser:
                 
                 if tool_calls:
                     available_fxns = {
-                        "get_relevant_context" : get_relevant_context
+                        "get_relevant_question_context" : get_relevant_question_context
                     }
                     
                     messages.append(response_message),
@@ -285,7 +311,7 @@ if StreamlitUser:
                         )
                 context_enhanced_response = OpenAIClient.chat.completions.create(
                     messages=messages,
-                    model="gpt-4",
+                    model="gpt-3.5-turbo",
                     seed = 82598,
                     temperature=0,
                     n=1,
