@@ -172,7 +172,14 @@ def get_relevant_question_context(query, limit = 10):
         
         FN_DOC = [f"CONTEXT_SOURCE_FILE:{file}\nCONTENT:{docu}\n" for file,docu in list(zip(reranked_filenames, reranked_documents))]
         context_data = "\n".join(FN_DOC)
-        context_str = f"You may use the following SOP Documents to answer the question:\n{context_data}"
+        context_str = f"""
+        You may use the following SOP Documents to answer the question:
+        
+        {context_data}
+
+        If multiple possible answers are found, ask clarifying questions to the user.
+        If context is insufficient, use the standard response template: "Sorry I was not able to find the answer but similar contents may be found in the SOP, {CONTEXT_SOURCE_FILE}".
+        """
         return context_str
         
     else:
@@ -247,9 +254,6 @@ Use the following response template if you were able to answer the user's questi
 
 Relevant Context found in {CONTEXT_SOURCE_FILE}\n
 {PROMPT_RESPONSE}
-
-If multiple possible answers are found, ask clarifying questions to the user.
-If context is insufficient, use the standard response template: "Sorry I was not able to find the answer but similar contents may be found in the SOP, {CONTEXT_SOURCE_FILE}".
 
 In the instance that the question is incomprehensible, use the template: "Sorry I was not able to understand the question, can you rephrase the question?"
 Lastly, respond in a bubbly tone and replicate how a travel agent may communicate with a customer.
